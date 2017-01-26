@@ -1,4 +1,4 @@
--- Tags are simple signs used to mark a path. They contain the following info:
+-- simple signs used to mark a path. They contain the following info:
 -- label (very short string)
 -- number (increments with each item placed from a stack)
 -- position of the previous tag placed
@@ -15,7 +15,7 @@ local formspec = "size[8,2]" .. default.gui_bg ..
 	"button_exit[2.5,1.5;3,1;save;Save]"
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
-	if formname ~= "path_markers:blank" then return end
+	if formname ~= "breadcrumbs:blank" then return end
 	local inv = player:get_inventory()
 	local stack = player:get_wielded_item()
 
@@ -23,7 +23,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		local data = {}
 		data.label = fields.label
 		data.number = 1
-		local new_stack = ItemStack({name="path_markers:marker", count=stack:get_count(), wear=0, metadata=minetest.serialize(data)})
+		local new_stack = ItemStack({name="breadcrumbs:marker", count=stack:get_count(), wear=0, metadata=minetest.serialize(data)})
 		player:set_wielded_item(new_stack)
 	end
 end)
@@ -34,7 +34,7 @@ local tag_to_itemstack = function(pos, count)
 	data.label = meta:get_string("label")
 	data.number = meta:get_int("number") + 1
 	data.previous_pos = pos
-	local new_stack = ItemStack({name="path_markers:marker", count=count, wear=0, metadata=minetest.serialize(data)})
+	local new_stack = ItemStack({name="breadcrumbs:marker", count=count, wear=0, metadata=minetest.serialize(data)})
 	return new_stack
 end
 
@@ -42,7 +42,7 @@ local read_pointed_thing_tag = function(itemstack, pointed_thing)
 	if pointed_thing.type == "node" then
 		local pos = pointed_thing.under
 		local node = minetest.get_node(pos)
-		if node.name == "path_markers:marker" then
+		if node.name == "breadcrumbs:marker" then
 			itemstack = tag_to_itemstack(pos, itemstack:get_count())
 			return itemstack, true
 		end
@@ -50,12 +50,12 @@ local read_pointed_thing_tag = function(itemstack, pointed_thing)
 	return itemstack, false
 end
 
-minetest.register_craftitem("path_markers:blank", {
+minetest.register_craftitem("breadcrumbs:blank", {
 	description = "Blank Marker",
 	_doc_items_longdesc = "A blank path marker sign, ready to have a label affixed",
     _doc_items_usagehelp = "To start marking a new path, wield a stack of blank markers. You'll be presented with a form to fill in a short text label that this path will bear, after which you can begin placing path markers as you explore. You can also use a blank marker stack on an existing path marker that's already been placed and you'll copy the marker's label and continue the path from that point when laying down new markers from your copied stack.",
-	inventory_image = "path_markers_base.png",
-	wield_image = "path_markers_base.png",
+	inventory_image = "breadcrumbs_base.png",
+	wield_image = "breadcrumbs_base.png",
 	groups = {flammable = 3},
 
 	
@@ -63,26 +63,26 @@ minetest.register_craftitem("path_markers:blank", {
 		local itemstack, success = read_pointed_thing_tag(itemstack, pointed_thing)
 		if success then return itemstack end
 		-- Show formspec and start a new path
-		minetest.show_formspec(player:get_player_name(), "path_markers:blank", formspec)
+		minetest.show_formspec(player:get_player_name(), "breadcrumbs:blank", formspec)
 	end,
 	
 	on_use = function(itemstack, player, pointed_thing)
 		local itemstack, success = read_pointed_thing_tag(itemstack, pointed_thing)
 		if success then return itemstack end
 		-- Show formspec and start a new path
-		minetest.show_formspec(player:get_player_name(), "path_markers:blank", formspec)
+		minetest.show_formspec(player:get_player_name(), "breadcrumbs:blank", formspec)
 	end,
 })
 
-minetest.register_node("path_markers:marker", {
+minetest.register_node("breadcrumbs:marker", {
 	description = "Marker",
 	_doc_items_longdesc = "A path marker with a label affixed",
     _doc_items_usagehelp = "This marker has had a label assigned and is counting the markers you've been laying down. Each marker knows the location of the previous marker in your path, and right-clicking on it will cause it to emit a stream of indicators that only you can see pointing the direction it lies in. If you place a marker incorrectly you can \"undo\" the placement by clicking on it with the stack you used to place it. Otherwise, markers can only be removed with an axe. Labeled markers can be turned back into blank markers via the crafting grid.",
 	drawtype = "nodebox",
-	tiles = {"path_markers_wall.png^path_markers_text.png"},
-	inventory_image = "path_markers_base.png^path_markers_text.png",
-	wield_image = "path_markers_base.png^path_markers_text.png",
-	drop = "path_markers:blank",
+	tiles = {"breadcrumbs_wall.png^breadcrumbs_text.png"},
+	inventory_image = "breadcrumbs_base.png^breadcrumbs_text.png",
+	wield_image = "breadcrumbs_base.png^breadcrumbs_text.png",
+	drop = "breadcrumbs:blank",
 	paramtype = "light",
 	paramtype2 = "wallmounted",
 	sunlight_propagates = true,
@@ -148,7 +148,7 @@ minetest.register_node("path_markers:marker", {
 		end
 		local pos = pointed_thing.under
 		local node = minetest.get_node(pos)
-		if node.name ~= "path_markers:marker" then return itemstack end
+		if node.name ~= "breadcrumbs:marker" then return itemstack end
 		
 		local node_meta = minetest.get_meta(pos)
 		local item_data = minetest.deserialize(itemstack:get_metadata())
@@ -167,7 +167,7 @@ minetest.register_node("path_markers:marker", {
 	end,
 	
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
-		if itemstack:get_name() == "path_markers:blank"	then
+		if itemstack:get_name() == "breadcrumbs:blank"	then
 			return tag_to_itemstack(pos, itemstack:get_count())
 		end
 	
@@ -204,13 +204,13 @@ minetest.register_node("path_markers:marker", {
 })
 
 minetest.register_craft({
-	output = "path_markers:blank",
+	output = "breadcrumbs:blank",
 	type = "shapeless",
-	recipe = {"path_markers:marker"},
+	recipe = {"breadcrumbs:marker"},
 })
 
 minetest.register_craft({
-	output = "path_markers:blank 8",
+	output = "breadcrumbs:blank 8",
 	recipe = {
 		{'', 'group:wood', 'group:wood'},
 		{'', 'group:wood', 'group:wood'},
