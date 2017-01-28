@@ -1,0 +1,4 @@
+#Causes path marker signs to emit a very dim light, making it easier
+#to spot them in pitch darkness but otherwise not illuminating their
+#surroundings
+breadcrumbs_glow_in_the_dark (Glowing marker signs) bool true

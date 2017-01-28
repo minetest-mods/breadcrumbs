@@ -9,6 +9,14 @@
 -- When a blank tag stack is used to punch an in-world tag, it inherits that tag's values (continues the chain)
 -- Can turn a tag stack blank again via crafting menu
 
+local glow = minetest.setting_get("breadcrumbs_glow_in_the_dark")
+local glow_level
+if glow == true or glow == nil then
+	glow_level = 4
+else
+	glow_level = 0
+end
+
 local formspec = "size[8,2]" .. default.gui_bg ..
 	default.gui_bg_img ..
 	"field[0.5,1;7.5,0;label;Label:;]" ..
@@ -89,7 +97,7 @@ minetest.register_node("breadcrumbs:marker", {
 	is_ground_content = false,
 	walkable = false,
 	sounds = default.node_sound_wood_defaults(),
-	light_source = 4,
+	light_source = glow_level,
 	node_box = {
 		type = "wallmounted",
 		wall_top    = {-0.3125, 0.4375, -0.3125, 0.3125, 0.5, 0.3125},
