@@ -17,6 +17,21 @@ else
 	glow_level = 0
 end
 
+local particles = minetest.setting_getbool("breadcrumbs_particles")
+if particles == nil then
+	particles = true -- default true
+end
+
+local blank_longdesc = "A blank path marker sign, ready to have a label affixed"
+local blank_usagehelp = "To start marking a new path, wield a stack of blank markers. You'll be presented with a form to fill in a short text label that this path will bear, after which you can begin placing path markers as you explore. You can also use a blank marker stack on an existing path marker that's already been placed and you'll copy the marker's label and continue the path from that point when laying down new markers from your copied stack."
+
+local marker_longdesc = "A path marker with a label affixed"
+local marker_usagehelp = "This marker has had a label assigned and is counting the markers you've been laying down."
+if particles then
+	marker_usagehelp = marker_usagehelp .. " Each marker knows the location of the previous marker in your path, and right-clicking on it will cause it to emit a stream of indicators that only you can see pointing the direction it lies in."
+end
+marker_usagehelp = marker_usagehelp .. " If you place a marker incorrectly you can \"undo\" the placement by clicking on it with the stack you used to place it. Otherwise, markers can only be removed with an axe. Labeled markers can be turned back into blank markers via the crafting grid."
+
 local formspec = "size[8,2]" .. default.gui_bg ..
 	default.gui_bg_img ..
 	"field[0.5,1;7.5,0;label;Label:;]" ..
@@ -60,8 +75,8 @@ end
 
 minetest.register_craftitem("breadcrumbs:blank", {
 	description = "Blank Marker",
-	_doc_items_longdesc = "A blank path marker sign, ready to have a label affixed",
-    _doc_items_usagehelp = "To start marking a new path, wield a stack of blank markers. You'll be presented with a form to fill in a short text label that this path will bear, after which you can begin placing path markers as you explore. You can also use a blank marker stack on an existing path marker that's already been placed and you'll copy the marker's label and continue the path from that point when laying down new markers from your copied stack.",
+	_doc_items_longdesc = blank_longdesc,
+    _doc_items_usagehelp = blank_usagehelp,
 	inventory_image = "breadcrumbs_base.png",
 	wield_image = "breadcrumbs_base.png",
 	groups = {flammable = 3},
@@ -84,8 +99,8 @@ minetest.register_craftitem("breadcrumbs:blank", {
 
 minetest.register_node("breadcrumbs:marker", {
 	description = "Marker",
-	_doc_items_longdesc = "A path marker with a label affixed",
-    _doc_items_usagehelp = "This marker has had a label assigned and is counting the markers you've been laying down. Each marker knows the location of the previous marker in your path, and right-clicking on it will cause it to emit a stream of indicators that only you can see pointing the direction it lies in. If you place a marker incorrectly you can \"undo\" the placement by clicking on it with the stack you used to place it. Otherwise, markers can only be removed with an axe. Labeled markers can be turned back into blank markers via the crafting grid.",
+	_doc_items_longdesc = marker_longdesc,
+    _doc_items_usagehelp = marker_usagehelp,
 	drawtype = "nodebox",
 	tiles = {"breadcrumbs_wall.png^breadcrumbs_text.png"},
 	inventory_image = "breadcrumbs_base.png^breadcrumbs_text.png",
@@ -185,7 +200,7 @@ minetest.register_node("breadcrumbs:marker", {
 		previous_pos.y = meta:get_int("previous_pos_y")
 		previous_pos.z = meta:get_int("previous_pos_z")
 				
-		if meta:get_int("number") > 1 and previous_pos.x and previous_pos.y and previous_pos.z then
+		if meta:get_int("number") > 1 and previous_pos.x and previous_pos.y and previous_pos.z and particles then
 			local dir = vector.multiply(vector.direction(pos, previous_pos), 2)
 			minetest.add_particlespawner({
 				amount = 100,

@@ -2,3 +2,6 @@
 #to spot them in pitch darkness but otherwise not illuminating their
 #surroundings
 breadcrumbs_glow_in_the_dark (Glowing marker signs) bool true
+
+#Sets whether the particle pointer function is available.
+breadcrumbs_particles (Particle pointers) bool true
