@@ -22,6 +22,16 @@ if particles == nil then
 	particles = true -- default true
 end
 
+local gui_bg, gui_bg_img, wood_sounds
+if minetest.get_modpath("default") then
+	gui_bg = default.gui_bg
+	gui_bg_img = default.gui_bg_img
+	wood_sounds = default.node_sound_wood_defaults()
+else
+	gui_bg = "bgcolor[#080808BB;true]"
+	gui_bg_img = "background[5,5;1,1;gui_formbg.png;true]"
+end
+
 local blank_longdesc = "A blank path marker sign, ready to have a label affixed"
 local blank_usagehelp = "To start marking a new path, wield a stack of blank markers. You'll be presented with a form to fill in a short text label that this path will bear, after which you can begin placing path markers as you explore. You can also use a blank marker stack on an existing path marker that's already been placed and you'll copy the marker's label and continue the path from that point when laying down new markers from your copied stack."
 
@@ -32,8 +42,8 @@ if particles then
 end
 marker_usagehelp = marker_usagehelp .. " If you place a marker incorrectly you can \"undo\" the placement by clicking on it with the stack you used to place it. Otherwise, markers can only be removed with an axe. Labeled markers can be turned back into blank markers via the crafting grid."
 
-local formspec = "size[8,2]" .. default.gui_bg ..
-	default.gui_bg_img ..
+local formspec = "size[8,2]" .. gui_bg ..
+	gui_bg_img ..
 	"field[0.5,1;7.5,0;label;Label:;]" ..
 	"button_exit[2.5,1.5;3,1;save;Save]"
 
@@ -111,7 +121,7 @@ minetest.register_node("breadcrumbs:marker", {
 	sunlight_propagates = true,
 	is_ground_content = false,
 	walkable = false,
-	sounds = default.node_sound_wood_defaults(),
+	sounds = wood_sounds,
 	light_source = glow_level,
 	node_box = {
 		type = "wallmounted",
@@ -175,7 +185,7 @@ minetest.register_node("breadcrumbs:marker", {
 		
 		local node_meta = minetest.get_meta(pos)
 		local item_data = minetest.deserialize(itemstack:get_metadata())
-		
+	
 		if node_meta:get_string("label") == item_data.label and
 			node_meta:get_int("number") == item_data.number - 1 then
 			item_data.number = item_data.number - 1
@@ -217,7 +227,7 @@ minetest.register_node("breadcrumbs:marker", {
 				maxsize = 1,
 				collisiondetection = false,
 				vertical = false,
-				texture = "default_cloud.png",
+				texture = "breadcrumbs_particle.png",
 				playername = player:get_player_name()
 			})			
 		end
