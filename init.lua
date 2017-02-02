@@ -29,7 +29,7 @@ if minetest.get_modpath("default") then
 	wood_sounds = default.node_sound_wood_defaults()
 else
 	gui_bg = "bgcolor[#080808BB;true]"
-	gui_bg_img = "background[5,5;1,1;gui_formbg.png;true]"
+	gui_bg_img = ""
 end
 
 local blank_longdesc = "A blank path marker sign, ready to have a label affixed"
