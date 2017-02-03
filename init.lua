@@ -9,9 +9,13 @@
 -- When a blank tag stack is used to punch an in-world tag, it inherits that tag's values (continues the chain)
 -- Can turn a tag stack blank again via crafting menu
 
+-- internationalization boilerplate
+local MP = minetest.get_modpath(minetest.get_current_modname())
+local S, NS = dofile(MP.."/intllib.lua")
+
 local glow = minetest.setting_get("breadcrumbs_glow_in_the_dark")
 local glow_level
-if glow == true or glow == nil then
+if (glow == "true") or (glow == nil) then
 	glow_level = 4
 else
 	glow_level = 0
@@ -32,20 +36,24 @@ else
 	gui_bg_img = ""
 end
 
-local blank_longdesc = "A blank path marker sign, ready to have a label affixed"
-local blank_usagehelp = "To start marking a new path, wield a stack of blank markers. You'll be presented with a form to fill in a short text label that this path will bear, after which you can begin placing path markers as you explore. You can also use a blank marker stack on an existing path marker that's already been placed and you'll copy the marker's label and continue the path from that point when laying down new markers from your copied stack."
+--Doctumentation
+local blank_longdesc = S("A blank path marker sign, ready to have a label affixed")
+local blank_usagehelp = S("To start marking a new path, wield a stack of blank markers. You'll be presented with a form to fill in a short text label that this path will bear, after which you can begin placing path markers as you explore. You can also use a blank marker stack on an existing path marker that's already been placed and you'll copy the marker's label and continue the path from that point when laying down new markers from your copied stack.")
 
-local marker_longdesc = "A path marker with a label affixed"
-local marker_usagehelp = "This marker has had a label assigned and is counting the markers you've been laying down."
+local marker_longdesc = S("A path marker with a label affixed")
+local marker_usagehelp = S("This marker has had a label assigned and is counting the markers you've been laying down.")
 if particles then
-	marker_usagehelp = marker_usagehelp .. " Each marker knows the location of the previous marker in your path, and right-clicking on it will cause it to emit a stream of indicators that only you can see pointing the direction it lies in."
+	marker_usagehelp = marker_usagehelp .. " " .. S("Each marker knows the location of the previous marker in your path, and right-clicking on it will cause it to emit a stream of indicators that only you can see pointing the direction it lies in.")
 end
-marker_usagehelp = marker_usagehelp .. " If you place a marker incorrectly you can \"undo\" the placement by clicking on it with the stack you used to place it. Otherwise, markers can only be removed with an axe. Labeled markers can be turned back into blank markers via the crafting grid."
+marker_usagehelp = marker_usagehelp .. " " .. S("If you place a marker incorrectly you can \"undo\" the placement by clicking on it with the stack you used to place it. Otherwise, markers can only be removed with an axe. Labeled markers can be turned back into blank markers via the crafting grid.")
+
+local label_text = S("Label:")
+local save_text = S("Save")
 
 local formspec = "size[8,2]" .. gui_bg ..
 	gui_bg_img ..
-	"field[0.5,1;7.5,0;label;Label:;]" ..
-	"button_exit[2.5,1.5;3,1;save;Save]"
+	"field[0.5,1;7.5,0;label;" .. label_text .. ";]" ..
+	"button_exit[2.5,1.5;3,1;save;" .. save_text .. "]"
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
 	if formname ~= "breadcrumbs:blank" then return end
@@ -84,7 +92,7 @@ local read_pointed_thing_tag = function(itemstack, pointed_thing)
 end
 
 minetest.register_craftitem("breadcrumbs:blank", {
-	description = "Blank Marker",
+	description = S("Blank Marker"),
 	_doc_items_longdesc = blank_longdesc,
     _doc_items_usagehelp = blank_usagehelp,
 	inventory_image = "breadcrumbs_base.png",
@@ -107,8 +115,11 @@ minetest.register_craftitem("breadcrumbs:blank", {
 	end,
 })
 
+local placed_by_text = S("%s #%d\nPlaced by %s")
+local distance_from_text = S("%dm from last marker")
+
 minetest.register_node("breadcrumbs:marker", {
-	description = "Marker",
+	description = S("Marker"),
 	_doc_items_longdesc = marker_longdesc,
     _doc_items_usagehelp = marker_usagehelp,
 	drawtype = "nodebox",
@@ -160,10 +171,10 @@ minetest.register_node("breadcrumbs:marker", {
 			node_meta:set_int("previous_pos_z", data.previous_pos.z)
 			local dist = vector.distance(pos, data.previous_pos)
 			node_meta:set_string("infotext",
-				string.format("%s #%d\nPlaced by %s\n%dm from last marker", data.label, data.number, playername, dist))
+				string.format(placed_by_text .. "\n" .. distance_from_text, data.label, data.number, playername, dist))
 		else
 			node_meta:set_string("infotext",
-				string.format("%s #%d\nPlaced by %s", data.label, data.number, playername))
+				string.format(placed_by_text, data.label, data.number, playername))
 		end
 		
 		data.number = data.number + 1
@@ -199,6 +210,8 @@ minetest.register_node("breadcrumbs:marker", {
 		return itemstack
 	end,
 	
+	-- If the player's right-clicking with a blank sign stack, copy the sign's state onto it.
+	-- Show particle stream directed at last sign, provided particles are enabled for this mod
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		if itemstack:get_name() == "breadcrumbs:blank"	then
 			return tag_to_itemstack(pos, itemstack:get_count())
