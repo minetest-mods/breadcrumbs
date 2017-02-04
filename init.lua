@@ -98,7 +98,6 @@ minetest.register_craftitem("breadcrumbs:blank", {
 	inventory_image = "breadcrumbs_base.png",
 	wield_image = "breadcrumbs_base.png",
 	groups = {flammable = 3},
-
 	
 	on_place = function(itemstack, player, pointed_thing)
 		local itemstack, success = read_pointed_thing_tag(itemstack, pointed_thing)
@@ -262,4 +261,20 @@ minetest.register_craft({
 		{'', 'group:wood', 'group:wood'},
 		{'', 'group:stick', ''},
 	}
+})
+
+local wood_burn_time = minetest.get_craft_result({method="fuel", width=1, items={ItemStack("default:wood")}}).time
+local stick_burn_time = minetest.get_craft_result({method="fuel", width=1, items={ItemStack("default:stick")}}).time
+local marker_burn_time = math.floor((wood_burn_time * 4 + stick_burn_time) / 8)
+
+minetest.register_craft({
+	type = "fuel",
+	recipe = "breadcrumbs:marker",
+	burntime = marker_burn_time,
+})
+
+minetest.register_craft({
+	type = "fuel",
+	recipe = "breadcrumbs:marker",
+	burntime = marker_burn_time,
 })
