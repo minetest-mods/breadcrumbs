@@ -278,3 +278,15 @@ minetest.register_craft({
 	recipe = "breadcrumbs:marker",
 	burntime = marker_burn_time,
 })
+
+if minetest.get_modpath("loot") then
+	loot.register_loot({
+		weights = { generic = 100 },
+		payload = {
+			stack = ItemStack("breadcrumbs:blank"),
+			min_size = 30,
+			max_size = 99,
+		},
+	})
+end
+
