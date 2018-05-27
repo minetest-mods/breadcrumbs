@@ -2,8 +2,8 @@ This mod adds a specialized type of sign block that's intended to be used while 
 
 Path markers are initially crafted in a "blank" state. Equip the stack of markers and click on anything with them to bring up a form where you can enter a short text label for this stack of markers. This initializes the stack of markers with that label. They can then be placed on surfaces like normal signs, but the text of the sign is predefined. It will read:
 
-<label> #1
-placed by <player name>
+	<label> #1
+	placed by <player name>
 
 Each subsequent sign placed from this stack will increment the number count, and will also add a line of text indicating how many meters away the previous sign in the stack was placed. If you right-click on the sign a stream of particles will be displayed that travel in the direction the previous sign lies in. This should allow much easier "backtracking" along the path of signs. Good practice is to choose a label that describes the starting point of your expedition, since the trail of signs you leave behind will send travelers in the direction of that origin.
 
