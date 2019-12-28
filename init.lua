@@ -47,6 +47,39 @@ if particles then
 end
 marker_usagehelp = marker_usagehelp .. " " .. S("If you place a marker incorrectly you can \"undo\" the placement by clicking on it with the stack you used to place it. Otherwise, markers can only be removed with an axe. Labeled markers can be turned back into blank markers via the crafting grid.")
 
+-----------------------------------------------------------------
+-- HUD markers
+local MARKER_DURATION = 60
+local hud_markers = {}
+local add_hud_marker = function(player, pos, label)
+	local hud_id = player:hud_add({
+		hud_elem_type = "waypoint",
+		name = label,
+		text = "m",
+		number = 0xFFFFFF,
+		world_pos = pos})
+	table.insert(hud_markers, {player=player, hud_id=hud_id, duration=0})
+end
+minetest.register_globalstep(function(dtime)
+	for i=#hud_markers,1,-1 do
+		local marker = hud_markers[i]
+		marker.duration = marker.duration + dtime
+		if marker.duration > MARKER_DURATION then
+			marker.player:hud_remove(marker.hud_id)
+			table.remove(hud_markers, i)
+		end
+	end
+end)
+minetest.register_on_leaveplayer(function(player, timed_out)
+	for i=#hud_markers,1,-1 do
+		local marker = hud_markers[i]
+		if marker.player == player then
+			table.remove(hud_markers, i)
+		end
+	end
+end)
+--------------------------------------------------------------------
+
 local label_text = S("Label:")
 local save_text = S("Save")
 
@@ -61,21 +94,21 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	local stack = player:get_wielded_item()
 
 	if fields.save and fields.label ~= "" then
-		local data = {}
-		data.label = fields.label
-		data.number = 1
-		local new_stack = ItemStack({name="breadcrumbs:marker", count=stack:get_count(), wear=0, metadata=minetest.serialize(data)})
+		local new_stack = ItemStack({name="breadcrumbs:marker", count=stack:get_count(), wear=0})
+		local meta = new_stack:get_meta()
+		meta:set_string("label", fields.label)
+		meta:set_int("number", 1)
 		player:set_wielded_item(new_stack)
 	end
 end)
 
 local tag_to_itemstack = function(pos, count)
-	local meta = minetest.get_meta(pos)
-	local data = {}
-	data.label = meta:get_string("label")
-	data.number = meta:get_int("number") + 1
-	data.previous_pos = pos
-	local new_stack = ItemStack({name="breadcrumbs:marker", count=count, wear=0, metadata=minetest.serialize(data)})
+	local node_meta = minetest.get_meta(pos)
+	local new_stack = ItemStack({name="breadcrumbs:marker", count=count, wear=0})
+	local item_meta = new_stack:get_meta()
+	item_meta:set_string("label", node_meta:get_string("label"))
+	item_meta:set_int("number", node_meta:get_int("number") + 1)
+	item_meta:set_string("previous_pos", minetest.pos_to_string(pos))
 	return new_stack
 end
 
@@ -150,10 +183,11 @@ minetest.register_node("breadcrumbs:marker", {
 		local playername = placer:get_player_name()
 		if minetest.is_protected(pos, playername) then return itemstack end
 
-		local meta = itemstack:get_metadata()
-		local data = minetest.deserialize(meta)
-		
-		if not data then return itemstack end
+		local item_meta = itemstack:get_meta()
+		local label = item_meta:get_string("label")
+		if label == "" then return itemstack end -- don't place if there's no data
+		local number = item_meta:get_int("number")
+		local previous_pos_string = item_meta:get_string("previous_pos")
 
 		local success
 		itemstack, success = minetest.item_place(itemstack, placer, pointed_thing)
@@ -161,25 +195,24 @@ minetest.register_node("breadcrumbs:marker", {
 		if not success then return itemstack end
 		
 		local node_meta = minetest.get_meta(pos)
-		node_meta:set_string("label", data.label)
-		node_meta:set_int("number", data.number)
+		node_meta:set_string("label", label)
+		node_meta:set_int("number", number)
 		
-		if data.number > 1 and data.previous_pos then
-			node_meta:set_int("previous_pos_x", data.previous_pos.x)
-			node_meta:set_int("previous_pos_y", data.previous_pos.y)
-			node_meta:set_int("previous_pos_z", data.previous_pos.z)
-			local dist = vector.distance(pos, data.previous_pos)
+		if number > 1 and previous_pos_string ~= "" then
+			local previous_pos = minetest.string_to_pos(previous_pos_string)
+			node_meta:set_string("previous_pos", previous_pos_string)
+			local dist = vector.distance(pos, previous_pos)
 			node_meta:set_string("infotext",
-				string.format(placed_by_text .. "\n" .. distance_from_text, data.label, data.number, playername, dist))
+				string.format(placed_by_text .. "\n" .. distance_from_text, label, number, playername, dist))
 		else
 			node_meta:set_string("infotext",
-				string.format(placed_by_text, data.label, data.number, playername))
+				string.format(placed_by_text, label, number, playername))
 		end
 		
-		data.number = data.number + 1
-		data.previous_pos = pos
-		itemstack:set_metadata(minetest.serialize(data))
-	
+		local item_meta = itemstack:get_meta()
+		item_meta:set_string("label", label)
+		item_meta:set_int("number", number + 1)
+		item_meta:set_string("previous_pos", minetest.pos_to_string(pos))		
 		return itemstack
 	end,
 	
@@ -194,15 +227,14 @@ minetest.register_node("breadcrumbs:marker", {
 		if node.name ~= "breadcrumbs:marker" then return itemstack end
 		
 		local node_meta = minetest.get_meta(pos)
-		local item_data = minetest.deserialize(itemstack:get_metadata())
+		local item_meta = itemstack:get_meta()
+		
+		local item_label = item_meta:get_string("label")
+		local item_number = item_meta:get_int("number")
 	
-		if node_meta:get_string("label") == item_data.label and
-			node_meta:get_int("number") == item_data.number - 1 then
-			item_data.number = item_data.number - 1
-			item_data.previous_pos.x = node_meta:get_int("previous_pos_x")
-			item_data.previous_pos.y = node_meta:get_int("previous_pos_y")
-			item_data.previous_pos.z = node_meta:get_int("previous_pos_z")
-			itemstack:set_metadata(minetest.serialize(item_data))
+		if node_meta:get_string("label") == item_label and node_meta:get_int("number") == item_number - 1 then
+			item_meta:set_int("number", item_number - 1)
+			item_meta:set_string("previous_pos", node_meta:get_string("previous_pos"))
 			itemstack:set_count(itemstack:get_count() + 1)
 			minetest.remove_node(pos)
 		end
@@ -216,17 +248,20 @@ minetest.register_node("breadcrumbs:marker", {
 			return tag_to_itemstack(pos, itemstack:get_count())
 		end
 	
-		local meta = minetest.get_meta(pos)
-		local previous_pos = {}
-		previous_pos.x = meta:get_int("previous_pos_x")
-		previous_pos.y = meta:get_int("previous_pos_y")
-		previous_pos.z = meta:get_int("previous_pos_z")
-				
-		if meta:get_int("number") > 1 and previous_pos.x and previous_pos.y and previous_pos.z and particles then
-			local dir = vector.multiply(vector.direction(pos, previous_pos), 2)
+		local node_meta = minetest.get_meta(pos)
+		local previous_pos_string = node_meta:get_string("previous_pos")
+		
+		if node_meta:get_int("number") > 1 and previous_pos_string ~= "" and particles then
+			local previous_pos = minetest.string_to_pos(previous_pos_string)
+			local label = node_meta:get_string("label")
+			local number = node_meta:get_int("number") - 1
+
+			local distance = math.min(vector.distance(pos, previous_pos), 60) -- Particle stream extends no more than 60 meters
+			local dir = vector.multiply(vector.direction(pos, previous_pos), distance/10) -- divide distance by exptime
+			add_hud_marker(player, previous_pos, label .. " #" .. tostring(number))
 			minetest.add_particlespawner({
 				amount = 100,
-				time = 10,
+				time = MARKER_DURATION,
 				minpos = pos,
 				maxpos = pos,
 				minvel = dir,
@@ -290,3 +325,23 @@ if minetest.get_modpath("loot") then
 	})
 end
 
+minetest.register_lbm({
+	label = "Upgrade legacy breadcrumb previous_pos",
+	name = "breadcrumbs:upgrade_previous_pos",
+	nodenames = {"breadcrumbs:marker"},
+	run_at_every_load = false,
+	action = function(pos, node)
+		local node_meta = minetest.get_meta(pos)
+		-- The previous_pos used to be stored as a set of three integer metadatas instead of one string
+		local previous_pos_x = tonumber(node_meta:get_string("previous_pos_x"))
+		if previous_pos_x ~= nil then
+			local previous_pos_y = node_meta:get_int("previous_pos_y")
+			local previous_pos_z = node_meta:get_int("previous_pos_z")
+			previous_pos_string = minetest.pos_to_string({x=previous_pos_x, y=previous_pos_y, z=previous_pos_z})
+			node_meta:set_string("previous_pos", previous_pos_string)
+			node_meta:set_string("previous_pos_x", "")
+			node_meta:set_string("previous_pos_y", "")
+			node_meta:set_string("previous_pos_z", "")
+		end
+	end,
+})
