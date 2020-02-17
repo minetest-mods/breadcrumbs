@@ -9,9 +9,7 @@
 -- When a blank tag stack is used to punch an in-world tag, it inherits that tag's values (continues the chain)
 -- Can turn a tag stack blank again via crafting menu
 
--- internationalization boilerplate
-local MP = minetest.get_modpath(minetest.get_current_modname())
-local S, NS = dofile(MP.."/intllib.lua")
+local S = minetest.get_translator(minetest.get_current_modname())
 
 local glow = minetest.setting_get("breadcrumbs_glow_in_the_dark")
 local glow_level
@@ -147,9 +145,6 @@ minetest.register_craftitem("breadcrumbs:blank", {
 	end,
 })
 
-local placed_by_text = S("%s #%d\nPlaced by %s")
-local distance_from_text = S("%dm from last marker")
-
 minetest.register_node("breadcrumbs:marker", {
 	description = S("Marker"),
 	_doc_items_longdesc = marker_longdesc,
@@ -201,12 +196,11 @@ minetest.register_node("breadcrumbs:marker", {
 		if number > 1 and previous_pos_string ~= "" then
 			local previous_pos = minetest.string_to_pos(previous_pos_string)
 			node_meta:set_string("previous_pos", previous_pos_string)
-			local dist = vector.distance(pos, previous_pos)
-			node_meta:set_string("infotext",
-				string.format(placed_by_text .. "\n" .. distance_from_text, label, number, playername, dist))
+			local dist = math.floor(vector.distance(pos, previous_pos))
+			node_meta:set_string("infotext", S("@1 #@2\nPlaced by @3", label, number, playername)
+				.. "\n" .. S("@1m from last marker", dist))
 		else
-			node_meta:set_string("infotext",
-				string.format(placed_by_text, label, number, playername))
+			node_meta:set_string("infotext", S("@1 #@2\nPlaced by @3", label, number, playername))
 		end
 		
 		local item_meta = itemstack:get_meta()

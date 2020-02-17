@@ -1,0 +1,12 @@
+@1 #@2@nPlaced by @3=
+@1m from last marker=
+A blank path marker sign, ready to have a label affixed=
+A path marker with a label affixed=
+Blank Marker=
+Each marker knows the location of the previous marker in your path, and right-clicking on it will cause it to emit a stream of indicators that only you can see pointing the direction it lies in.=
+If you place a marker incorrectly you can "undo" the placement by clicking on it with the stack you used to place it. Otherwise, markers can only be removed with an axe. Labeled markers can be turned back into blank markers via the crafting grid.=
+Label:=
+Marker=
+Save=
+This marker has had a label assigned and is counting the markers you've been laying down.=
+To start marking a new path, wield a stack of blank markers. You'll be presented with a form to fill in a short text label that this path will bear, after which you can begin placing path markers as you explore. You can also use a blank marker stack on an existing path marker that's already been placed and you'll copy the marker's label and continue the path from that point when laying down new markers from your copied stack.=
