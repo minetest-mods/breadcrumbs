@@ -11,18 +11,14 @@
 
 local S = minetest.get_translator(minetest.get_current_modname())
 
-local glow = minetest.setting_get("breadcrumbs_glow_in_the_dark")
 local glow_level
-if (glow == "true") or (glow == nil) then
+if minetest.settings:get_bool("breadcrumbs_glow_in_the_dark", true) then
 	glow_level = 4
 else
 	glow_level = 0
 end
 
-local particles = minetest.setting_getbool("breadcrumbs_particles")
-if particles == nil then
-	particles = true -- default true
-end
+local particles = minetest.settings:get_bool("breadcrumbs_particles", true)
 
 local gui_bg, gui_bg_img, wood_sounds
 if minetest.get_modpath("default") then
