@@ -30,7 +30,8 @@ else
 	gui_bg_img = ""
 end
 
---Doctumentation
+-- Documentation
+-- luacheck: push ignore 631
 local blank_longdesc = S("A blank path marker sign, ready to have a label affixed")
 local blank_usagehelp = S("To start marking a new path, wield a stack of blank markers. You'll be presented with a form to fill in a short text label that this path will bear, after which you can begin placing path markers as you explore. You can also use a blank marker stack on an existing path marker that's already been placed and you'll copy the marker's label and continue the path from that point when laying down new markers from your copied stack.")
 
@@ -40,6 +41,7 @@ if particles then
 	marker_usagehelp = marker_usagehelp .. " " .. S("Each marker knows the location of the previous marker in your path, and right-clicking on it will cause it to emit a stream of indicators that only you can see pointing the direction it lies in.")
 end
 marker_usagehelp = marker_usagehelp .. " " .. S("If you place a marker incorrectly you can \"undo\" the placement by clicking on it with the stack you used to place it. Otherwise, markers can only be removed with an axe. Labeled markers can be turned back into blank markers via the crafting grid.")
+-- luacheck: pop
 
 -----------------------------------------------------------------
 -- HUD markers
@@ -84,7 +86,6 @@ local formspec = "size[8,2]" .. gui_bg ..
 
 minetest.register_on_player_receive_fields(function(player, formname, fields)
 	if formname ~= "breadcrumbs:blank" then return end
-	local inv = player:get_inventory()
 	local stack = player:get_wielded_item()
 
 	if fields.save and fields.label ~= "" then
@@ -125,16 +126,18 @@ minetest.register_craftitem("breadcrumbs:blank", {
 	inventory_image = "breadcrumbs_base.png",
 	wield_image = "breadcrumbs_base.png",
 	groups = {flammable = 3},
-	
+
 	on_place = function(itemstack, player, pointed_thing)
-		local itemstack, success = read_pointed_thing_tag(itemstack, pointed_thing)
+		local success
+		itemstack, success = read_pointed_thing_tag(itemstack, pointed_thing)
 		if success then return itemstack end
 		-- Show formspec and start a new path
 		minetest.show_formspec(player:get_player_name(), "breadcrumbs:blank", formspec)
 	end,
-	
+
 	on_use = function(itemstack, player, pointed_thing)
-		local itemstack, success = read_pointed_thing_tag(itemstack, pointed_thing)
+		local success
+		itemstack, success = read_pointed_thing_tag(itemstack, pointed_thing)
 		if success then return itemstack end
 		-- Show formspec and start a new path
 		minetest.show_formspec(player:get_player_name(), "breadcrumbs:blank", formspec)
@@ -182,13 +185,13 @@ minetest.register_node("breadcrumbs:marker", {
 
 		local success
 		itemstack, success = minetest.item_place(itemstack, placer, pointed_thing)
-	
+
 		if not success then return itemstack end
-		
+
 		local node_meta = minetest.get_meta(pos)
 		node_meta:set_string("label", label)
 		node_meta:set_int("number", number)
-		
+
 		if number > 1 and previous_pos_string ~= "" then
 			local previous_pos = minetest.string_to_pos(previous_pos_string)
 			node_meta:set_string("previous_pos", previous_pos_string)
@@ -198,14 +201,14 @@ minetest.register_node("breadcrumbs:marker", {
 		else
 			node_meta:set_string("infotext", S("@1 #@2\nPlaced by @3", label, number, playername))
 		end
-		
-		local item_meta = itemstack:get_meta()
+
+		item_meta = itemstack:get_meta()
 		item_meta:set_string("label", label)
 		item_meta:set_int("number", number + 1)
-		item_meta:set_string("previous_pos", minetest.pos_to_string(pos))		
+		item_meta:set_string("previous_pos", minetest.pos_to_string(pos))
 		return itemstack
 	end,
-	
+
 	-- "Undo" capability. If a player uses a stack on a marker that they just placed with it, the marker will be removed
 	-- and the stack restored to the state before it was placed.
 	on_use = function(itemstack, player, pointed_thing)
@@ -215,13 +218,13 @@ minetest.register_node("breadcrumbs:marker", {
 		local pos = pointed_thing.under
 		local node = minetest.get_node(pos)
 		if node.name ~= "breadcrumbs:marker" then return itemstack end
-		
+
 		local node_meta = minetest.get_meta(pos)
 		local item_meta = itemstack:get_meta()
-		
+
 		local item_label = item_meta:get_string("label")
 		local item_number = item_meta:get_int("number")
-	
+
 		if node_meta:get_string("label") == item_label and node_meta:get_int("number") == item_number - 1 then
 			item_meta:set_int("number", item_number - 1)
 			item_meta:set_string("previous_pos", node_meta:get_string("previous_pos"))
@@ -230,17 +233,17 @@ minetest.register_node("breadcrumbs:marker", {
 		end
 		return itemstack
 	end,
-	
+
 	-- If the player's right-clicking with a blank sign stack, copy the sign's state onto it.
 	-- Show particle stream directed at last sign, provided particles are enabled for this mod
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		if itemstack:get_name() == "breadcrumbs:blank"	then
 			return tag_to_itemstack(pos, itemstack:get_count())
 		end
-	
+
 		local node_meta = minetest.get_meta(pos)
 		local previous_pos_string = node_meta:get_string("previous_pos")
-		
+
 		if node_meta:get_int("number") > 1 and previous_pos_string ~= "" and particles then
 			local previous_pos = minetest.string_to_pos(previous_pos_string)
 			local label = node_meta:get_string("label")
@@ -266,9 +269,9 @@ minetest.register_node("breadcrumbs:marker", {
 				vertical = false,
 				texture = "breadcrumbs_particle.png",
 				playername = player:get_player_name()
-			})			
+			})
 		end
-		
+
 		return itemstack
 	end,
 })
@@ -327,7 +330,7 @@ minetest.register_lbm({
 		if previous_pos_x ~= nil then
 			local previous_pos_y = node_meta:get_int("previous_pos_y")
 			local previous_pos_z = node_meta:get_int("previous_pos_z")
-			previous_pos_string = minetest.pos_to_string({x=previous_pos_x, y=previous_pos_y, z=previous_pos_z})
+			local previous_pos_string = minetest.pos_to_string({x=previous_pos_x, y=previous_pos_y, z=previous_pos_z})
 			node_meta:set_string("previous_pos", previous_pos_string)
 			node_meta:set_string("previous_pos_x", "")
 			node_meta:set_string("previous_pos_y", "")
