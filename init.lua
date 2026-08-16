@@ -9,25 +9,21 @@
 -- When a blank tag stack is used to punch an in-world tag, it inherits that tag's values (continues the chain)
 -- Can turn a tag stack blank again via crafting menu
 
-local S = minetest.get_translator(minetest.get_current_modname())
-
-local glow_level
-if minetest.settings:get_bool("breadcrumbs_glow_in_the_dark", true) then
-	glow_level = 4
-else
-	glow_level = 0
+if not core.features.particlespawner_tweenable then
+	error("[breadcrumbs] Your Minetest version is too old. Please update to Luanti 5.6.0 or newer.")
 end
 
-local particles = minetest.settings:get_bool("breadcrumbs_particles", true)
+local S = minetest.get_translator(minetest.get_current_modname())
 
-local gui_bg, gui_bg_img, wood_sounds
+local glow_level = core.settings:get_bool("breadcrumbs_glow_in_the_dark", true) and 4 or 0
+local particles = core.settings:get_bool("breadcrumbs_particles", true)
+
+local gui_bg, wood_sounds
 if minetest.get_modpath("default") then
-	gui_bg = default.gui_bg
-	gui_bg_img = default.gui_bg_img
+	gui_bg = "" -- use prepends
 	wood_sounds = default.node_sound_wood_defaults()
 else
 	gui_bg = "bgcolor[#080808BB;true]"
-	gui_bg_img = ""
 end
 
 -- Documentation
@@ -45,15 +41,16 @@ marker_usagehelp = marker_usagehelp .. " " .. S("If you place a marker incorrect
 
 -----------------------------------------------------------------
 -- HUD markers
-local MARKER_DURATION = 60
+local MARKER_DURATION = 60 -- time in seconds until the marker is hidden
 local hud_markers = {}
 local add_hud_marker = function(player, pos, label)
 	local hud_id = player:hud_add({
-		hud_elem_type = "waypoint",
+		[core.features.hud_def_type_field and "type" or "hud_elem_type"] = "waypoint",
 		name = label,
 		text = "m",
 		number = 0xFFFFFF,
-		world_pos = pos})
+		world_pos = pos
+	})
 	table.insert(hud_markers, {player=player, hud_id=hud_id, duration=0})
 end
 minetest.register_globalstep(function(dtime)
@@ -80,7 +77,6 @@ local label_text = S("Label:")
 local save_text = S("Save")
 
 local formspec = "size[8,2]" .. gui_bg ..
-	gui_bg_img ..
 	"field[0.5,1;7.5,0;label;" .. label_text .. ";]" ..
 	"button_exit[2.5,1.5;3,1;save;" .. save_text .. "]"
 
@@ -89,7 +85,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	local stack = player:get_wielded_item()
 
 	if fields.save and fields.label ~= "" then
-		local new_stack = ItemStack({name="breadcrumbs:marker", count=stack:get_count(), wear=0})
+		local new_stack = ItemStack({name="breadcrumbs:marker", count=stack:get_count()})
 		local meta = new_stack:get_meta()
 		meta:set_string("label", fields.label)
 		meta:set_int("number", 1)
@@ -99,7 +95,7 @@ end)
 
 local tag_to_itemstack = function(pos, count)
 	local node_meta = minetest.get_meta(pos)
-	local new_stack = ItemStack({name="breadcrumbs:marker", count=count, wear=0})
+	local new_stack = ItemStack({name="breadcrumbs:marker", count=count})
 	local item_meta = new_stack:get_meta()
 	item_meta:set_string("label", node_meta:get_string("label"))
 	item_meta:set_int("number", node_meta:get_int("number") + 1)
@@ -252,19 +248,14 @@ minetest.register_node("breadcrumbs:marker", {
 			local distance = math.min(vector.distance(pos, previous_pos), 60) -- Particle stream extends no more than 60 meters
 			local dir = vector.multiply(vector.direction(pos, previous_pos), distance/10) -- divide distance by exptime
 			add_hud_marker(player, previous_pos, label .. " #" .. tostring(number))
-			minetest.add_particlespawner({
+			core.add_particlespawner({
 				amount = 100,
 				time = MARKER_DURATION,
-				minpos = pos,
-				maxpos = pos,
-				minvel = dir,
-				maxvel = dir,
-				minacc = {x=0, y=0, z=0},
-				maxacc = {x=0, y=0, z=0},
-				minexptime = 10,
-				maxexptime = 10,
-				minsize = 1,
-				maxsize = 1,
+				pos = pos,
+				vel = dir,
+				acc = {x=0, y=0, z=0},
+				exptime = 10,
+				size = 1,
 				collisiondetection = false,
 				vertical = false,
 				texture = "breadcrumbs_particle.png",
