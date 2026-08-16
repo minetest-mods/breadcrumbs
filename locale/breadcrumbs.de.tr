@@ -1,0 +1,13 @@
+# textdomain: breadcrumbs
+A blank path marker sign, ready to have a label affixed=Ein leerer Wegweiser. Bereit zum Beschriften.
+To start marking a new path, wield a stack of blank markers. You'll be presented with a form to fill in a short text label that this path will bear, after which you can begin placing path markers as you explore. You can also use a blank marker stack on an existing path marker that's already been placed and you'll copy the marker's label and continue the path from that point when laying down new markers from your copied stack.=
+A path marker with a label affixed=Behalte einige Wegweiser, um einen neuen Pfad zu markieren. Es wird dir einen Dialog zum Beschriften des Pfades angezeigt. Danach kannst du die Wegweiser deiner Erkundungsroute entlang platzieren. Bereits platzierte Wegweiser können mit "Benutzen" mit dem aktuellen Stapel weitergeführt werden.
+This marker has had a label assigned and is counting the markers you've been laying down.=Dieser Wegweiser hat eine Beschriftung und zählt die Wegweiser, die bereits platziert wurden.
+Each marker knows the location of the previous marker in your path, and right-clicking on it will cause it to emit a stream of indicators that only you can see pointing the direction it lies in.=Jeder Wegweiser kennt die Position des vorherigen im Pfad. Mittels Rechtsklick wird Dampf in Richtung dem vorherigen Wegweiser ausgegeben.
+If you place a marker incorrectly you can "undo" the placement by clicking on it with the stack you used to place it. Otherwise, markers can only be removed with an axe. Labeled markers can be turned back into blank markers via the crafting grid.=Wird ein Wegweiser falsch platziert, so kann dies über einen Klick mit dem Stapel rückgängig gemacht werden. Sonst hilft nur noch die Axt. Beschriftete Wegweiser können mit dem Fertigungsgitter in leere Wegweiser umgewandelt werden.
+Label:=Beschriftung:
+Save=Speichern
+Blank Marker=Leerer Wegweiser
+Marker=Wegweiser
+@1 #@2@nPlaced by @3=@1 #@2@nPlatziert von @3
+@1m from last marker=@1m zum vorherigen Wegweiser
